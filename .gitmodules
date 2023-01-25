@@ -1,0 +1,3 @@
+[submodule "terraform/cloudns-api"]
+	path = terraform/cloudns-api
+	url = https://github.com/tokiwinter/cloudns-api.git

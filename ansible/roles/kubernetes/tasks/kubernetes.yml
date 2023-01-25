@@ -1,0 +1,28 @@
+---
+- name: Install apt keys for Kubernetes
+  shell: 
+    cmd: "curl -fsSL {{item.url}} | gpg --dearmor -o {{item.dest}}"
+    creates: "{{item.dest}}"
+  loop:
+    - url: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
+      dest: /usr/share/keyrings/kubernetes-archive-keyring.gpg
+
+- name: Add Kubernetes repos
+  ansible.builtin.apt_repository:
+    filename: "{{item.filename}}"
+    repo: "{{item.repo}}"
+  loop:
+    - filename: "kubernetes"
+      repo: "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main"
+
+- name: Install Kubernetes packages
+  package:
+    name: "{{item}}"
+    state: present
+  loop: "{{ kubernetes_packages }}"
+
+- name: Hold Kubernetes packages
+  dpkg_selections:
+    name: "{{item}}"
+    selection: hold
+  loop: "{{ kubernetes_packages }}"

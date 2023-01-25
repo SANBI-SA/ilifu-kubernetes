@@ -1,0 +1,11 @@
+---
+- ansible.builtin.lineinfile:
+    path: /etc/modules-load.d/kubernetes.conf
+    create: true
+    owner: root
+    group: root
+    mode: '0644'
+    line: "{{item}}"
+- community.general.modprobe:
+    name: "{{item}}"
+    state: present

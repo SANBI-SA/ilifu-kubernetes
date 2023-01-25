@@ -1,0 +1,101 @@
+---
+# TODO: refactor this into submodules
+- name: Ensure that overlay and br_netfilter modules are installed
+  include_tasks: kernel_modules.yml
+  loop:
+    - overlay
+    - br_netfilter
+
+- name: Configure sysctl variables
+  ansible.posix.sysctl:
+    sysctl_file: /etc/sysctl.d/kubernetes.conf
+    name: "{{item.key}}"
+    value: "{{item.value}}"
+  loop:
+    - key: net.bridge.bridge-nf-call-iptables
+      value: 1
+    - key: net.bridge.bridge-nf-call-ip6tables
+      value: 1
+    - key: net.ipv4.ip_forward
+      value: 1
+
+- name: Check if swap is configured
+  command: "swapon --show"
+  register: swap_status
+
+- name: Disable swap
+  block:
+  - name: Disable SWAP since kubernetes can't work with swap enabled (1/2)
+    shell: |
+      swapoff -a
+
+  - name: Disable SWAP in fstab since kubernetes can't work with swap enabled (2/2)
+    replace:
+      path: /etc/fstab
+      regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
+      replace: '# \1'
+  when: swap_status.stdout != ""
+
+- name: Ensure that keyrings dir exists
+  file:
+    path: /usr/share/keyrings
+    owner: root
+    group: root
+    mode: "0755"
+    state: directory
+
+- name: Install apt keys for CRIO
+  shell: 
+    cmd: "curl -fsSL {{item.url}} | gpg --dearmor -o {{item.dest}}"
+    creates: "{{item.dest}}"
+  loop:
+    - url: "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/{{crio_os}}/Release.key"
+      dest: /usr/share/keyrings/libcontainers-archive-keyring.gpg
+    - url: "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{crio_version}}/{{crio_os}}/Release.key"
+      dest: /usr/share/keyrings/libcontainers-crio-archive-keyring.gpg
+
+- name: Add container / CRI-O repos
+  ansible.builtin.apt_repository:
+    filename: "{{item.filename}}"
+    repo: "{{item.repo}}"
+  loop:
+    - filename: "devel:kubic:libcontainers:stable"
+      repo: "deb [signed-by=/usr/share/keyrings/libcontainers-archive-keyring.gpg] https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/{{crio_os}}/ /"
+    - filename: "devel:kubic:libcontainers:stable:cri-o:{{crio_version}}"
+      repo: "deb [signed-by=/usr/share/keyrings/libcontainers-crio-archive-keyring.gpg] https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{crio_version}}/{{crio_os}}/ /"
+
+- name: Install CRI-O
+  package:
+    name: "{{item}}"
+    state: present
+  loop:
+    - cri-o
+    - cri-o-runc
+
+- name: Ensure that CRI-O is enabled
+  service:
+    name: crio
+    enabled: true
+
+- name: Install CRI-O CNI config
+  copy:
+    src: crio/10-crio-cni.conf
+    dest: /etc/crio/crio.conf.d/10-crio-cni.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: 
+    - Restart CRIO
+
+- name: Install CNI configuration
+  template:
+    src: cni/100-crio-bridge.conf.j2
+    dest: /etc/cni/net.d/100-crio-bridge.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: 
+    - Restart CRIO
+
+- name: Install Kubernetes
+  include_tasks: kubernetes.yml
