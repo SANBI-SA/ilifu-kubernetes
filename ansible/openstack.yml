@@ -1,0 +1,10 @@
+plugin: openstack.cloud.openstack
+expand_hostvars: no
+private: yes
+fail_on_errors: yes
+all_projects: no
+cache: no
+keyed_groups:
+  - key: openstack.metadata.ansible_group_name
+    prefix: ''
+    separator: ''
