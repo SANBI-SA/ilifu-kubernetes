@@ -12,3 +12,11 @@ variable "base_os_image" {
     type = string
     default = "b394becf-f5b6-417c-9d48-7adb92e1cb28"
 }
+
+variable "cloudns_api_user" {
+    type = string
+}
+
+variable "cloudns_api_password" {
+    type = string
+}
