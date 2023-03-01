@@ -1,5 +1,8 @@
 resource "openstack_compute_instance_v2" "control-plane" {
-  name            = "k8s-control"
+
+  count           = 1
+  
+  name            = "k8s-control-${count.index}"
   image_id        = var.base_os_image
   flavor_id       = var.compute_flavour_control-plane
   key_pair        = openstack_compute_keypair_v2.k8s-keypair.name
@@ -15,7 +18,8 @@ resource "openstack_compute_instance_v2" "control-plane" {
   }
 
   metadata = {
-        ansible_group_name = "k8s-control-plane"
+        ansible_group_name = "kube_control_plane,etcd"
+        ansible_etcd_member_name = "etcd${count.index}"
   }
 
   depends_on = [openstack_compute_instance_v2.worker-plane]
@@ -40,7 +44,7 @@ resource "openstack_compute_instance_v2" "worker-plane" {
   }
 
   metadata = {
-        ansible_group_name = "k8s-worker-plane"
+        ansible_group_name = "kube_node"
   }
 
 }

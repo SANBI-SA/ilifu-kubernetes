@@ -1,7 +1,30 @@
 ---
-- hosts: k8s_control_plane,k8s_worker_plane
-  become: yes
-  roles:
-    - name: kubernetes
-      tags:
-        - kubernetes
+
+- hosts: localhost
+  become: False
+  tasks:
+
+    - name: Download Kubespray repository
+      ansible.builtin.git:
+        repo: 'https://github.com/kubernetes-sigs/kubespray.git'
+        dest: "{{ playbook_dir }}/kubespray"
+        version: master
+
+    - name: Copy Kubespray sample inventory
+      ansible.builtin.copy: 
+        src: "{{ playbook_dir }}/kubespray/inventory/sample/"
+        dest: "{{ playbook_dir }}/kubespray/inventory/ilifu-k8s"
+
+    - name: Copy dynamic inventory to Kubespray inventory
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/openstack.yml"
+        dest: "{{ playbook_dir }}/kubespray/inventory/ilifu-k8s/openstack.yml"
+
+    - name: Copy files to Kubespray directory
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/files/{{ item }}"
+        dest: "{{ playbook_dir }}/kubespray/{{ item }}"
+      loop:
+        - inventory/ilifu-k8s/group_vars/all/all.yml
+        - inventory/ilifu-k8s/group_vars/all/openstack.yml
+        - inventory/ilifu-k8s/group_vars/k8s_cluster/k8s-cluster.yml
