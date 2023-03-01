@@ -9,4 +9,5 @@ ansible-galaxy install -r ansible-requirements.yml
 ansible-playbook -i openstack.yml playbook.yml
 
 cd kubespray
+pip install -r requirements.txt
 ansible-playbook -i inventory/ilifu-k8s/openstack.yml cluster.yml -b -v -u=ubuntu --private-key=/home/ubuntu/ilifu.pem
