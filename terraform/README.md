@@ -15,7 +15,7 @@ Variables for connecting to the OpenStack cloud at Ilifu (UCT) as well as connec
 
 1. Place the ilifu VM private key in the root directory (one above the `terraform` directory) `../ilifu.pem` with permission `0600`.
 
-2. Place the OpenStack application credentials file in the root directory (one above the `terraform` directory) as `../app-cred.sh`.
+2. Place the OpenStack application credentials file in the root directory (one above the `terraform` directory) as `../app-cred.sh`. **NOTE: Due to the way that kubespray works, your `app-cred.sh` file must include the `OS_APPLICATION_CREDENTIAL_NAME` variable!**
 
 3. ```bash
     terraform login # say yes and enter the team token
