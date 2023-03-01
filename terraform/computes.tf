@@ -1,6 +1,6 @@
 resource "openstack_compute_instance_v2" "control-plane" {
 
-  count           = 3
+  count           = 1
   
   name            = "k8s-control-${count.index}"
   image_id        = var.base_os_image
