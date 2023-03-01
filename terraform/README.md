@@ -6,7 +6,7 @@ This Terraform repository creates virtual machines for the purpose of bootstrapp
 
 - [ ] Create virtual networks dedicated to vms
 - [ ] Pre-allocate floating IP(s) that will be fixed within Ilifu and import them as `datasource`
-- [ ] Adjust metadata tagging to allow for dynamic inventory to be generated for Kubespray (match Kubespray expected host groups)
+- [x] Adjust metadata tagging to allow for dynamic inventory to be generated for Kubespray (match Kubespray expected host groups)
 
 
 ## How to Use
